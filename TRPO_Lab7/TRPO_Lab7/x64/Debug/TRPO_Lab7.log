@@ -1,0 +1,3 @@
+﻿  TRPO_Lab7.cpp
+D:\Учёба\3курс\ТРПО\Лаб7\repo\TRPO_Lab7\TRPO_Lab7.cpp(54,1): warning C4715: `main'::`2'::BinaryOperation::evaluate: значение возвращается не при всех путях выполнения
+  TRPO_Lab7.vcxproj -> D:\Учёба\3курс\ТРПО\Лаб7\repo\TRPO_Lab7\x64\Debug\TRPO_Lab7.exe
