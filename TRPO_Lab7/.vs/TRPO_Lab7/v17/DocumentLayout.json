@@ -14,15 +14,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
             },
             {
               "$type": "Bookmark",
@@ -36,7 +32,7 @@
               "RelativeDocumentMoniker": "TRPO_Lab7.cpp",
               "ToolTip": "D:\\\u0423\u0447\u0451\u0431\u0430\\3\u043A\u0443\u0440\u0441\\\u0422\u0420\u041F\u041E\\\u041B\u0430\u04317\\repo\\TRPO_Lab7\\TRPO_Lab7.cpp",
               "RelativeToolTip": "TRPO_Lab7.cpp",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAE0AAAAJAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAPwAAAABAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-05-01T06:32:25.758Z",
               "EditorCaption": ""

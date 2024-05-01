@@ -173,17 +173,81 @@ int main()
         ~CopySyntaxTree() { };
     };
 
+    struct FoldConstants : Transformer
+    {
+        Expression* transformNumber(Number const* number) // числа не сворачиваются, поэтому просто возвращаем копию
+        {
+            Expression* exp = new Number(number->value());
+            return exp;
+        }
+
+        Expression* transformBinaryOperation(BinaryOperation const* binop)
+        {
+            // Создаем указатели на левое и правое выражение
+            Expression* nleft = (binop->left())->transform(this); // рекурсивно уходим в левый операнд, чтобы свернуть
+            Expression* nright = (binop->right())->transform(this); // рекурсивно уходим в правый операнд, чтобы свернуть
+            int noperation = binop->operation();
+
+            // Создаем новый объект типа BinaryOperation с новыми указателями
+            BinaryOperation* nbinop = new BinaryOperation(nleft, noperation, nright);
+            //Проверяем на приводимость указателей к типу Number
+            Number* nleft_is_number = dynamic_cast<Number*>(nleft);
+            Number* nright_is_number = dynamic_cast<Number*>(nright);
+            if (nleft_is_number && nright_is_number) {
+                // Вычисляем значение выражения
+                Expression* result = new Number(binop->evaluate());
+                // Освобождаем память
+                delete nbinop;
+                //Возвращаем результат
+                return result;
+            }
+            else {
+                return nbinop;
+            }
+
+        }
+
+        Expression* transformFunctionCall(FunctionCall const* fcall)
+        {
+            // Создаем указатель на аргумент
+            Expression* arg = (fcall->arg())->transform(this); // рекурсивно сворачиваем аргумент
+            string const& nname = fcall->name();
+
+            // Создаем новый объект типа FunctionCall с новым указателем
+            FunctionCall* nfcall = new FunctionCall(nname, arg);
+
+            // Проверяем на приводимость указателя к типу Number
+            Number* arg_is_number = dynamic_cast<Number*>(arg);
+            if (arg_is_number) { // если аргумент — число
+                // Вычисляем значение выражения
+                Expression* result = new Number(fcall->evaluate());
+                // Освобождаем память
+                delete nfcall;
+                //Возвращаем результат
+                return result;
+            }
+            else {
+                return nfcall;
+            }
+        }
+        Expression* transformVariable(Variable const* var) // переменные не сворачиваются, поэтому просто возвращаем копию
+        {
+            Expression* exp = new Variable(var->name());
+            return exp;
+        }
+        ~FoldConstants() { };
+    };
+
     Number* n32 = new Number(32.0);
     Number* n16 = new Number(16.0);
     BinaryOperation* minus = new BinaryOperation(n32, BinaryOperation::MINUS, n16);
     FunctionCall* callSqrt = new FunctionCall("sqrt", minus);
     //Variable* var = new Variable("var");
-    Number* n8 = new Number(8.0);
-    BinaryOperation* mult = new BinaryOperation(n8, BinaryOperation::MUL, callSqrt);
+    Number* n10 = new Number(10.0);
+    BinaryOperation* mult = new BinaryOperation(n10, BinaryOperation::MUL, callSqrt);
     FunctionCall* callAbs = new FunctionCall("abs", mult);
     cout << callAbs->evaluate() << endl;
-    CopySyntaxTree CST;
-    Expression* newExpr = callAbs->transform(&CST);
+    FoldConstants FC;
+    Expression* newExpr = callAbs->transform(&FC);
     cout << newExpr->evaluate();
-
 }
