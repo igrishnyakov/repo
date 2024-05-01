@@ -5,10 +5,26 @@ using namespace std;
 
 int main()
 {
+    struct Transformer;
+    struct Number;
+    struct BinaryOperation;
+    struct FunctionCall;
+    struct Variable;
+
     struct Expression // базовая абстрактная структура
     {
         virtual double evaluate() const = 0; // абстрактный метод «вычислить»
+        virtual Expression* transform(Transformer* tr) const = 0;
         virtual ~Expression() { }
+    };
+
+    struct Transformer // pattern Visitor
+    {
+        virtual Expression* transformNumber(Number const*) = 0;
+        virtual Expression* transformBinaryOperation(BinaryOperation const*) = 0;
+        virtual Expression* transformFunctionCall(FunctionCall const*) = 0;
+        virtual Expression* transformVariable(Variable const*) = 0;
+        virtual ~Transformer() { }
     };
 
     struct Number : Expression // стуктура «Число»
@@ -16,6 +32,10 @@ int main()
         Number(double value) : value_(value) {}
         double value() const { return value_; } // метод чтения значения числа
         double evaluate() const { return value_; } // реализация виртуального метода «вычислить»
+        Expression* transform(Transformer* tr) const
+        {
+            return tr->transformNumber(this);
+        }
         ~Number() {}
     private:
         double value_;
@@ -39,6 +59,10 @@ int main()
         Expression const* left() const { return left_; } // чтение левого операнда
         Expression const* right() const { return right_; } // чтение правого операнда
         int operation() const { return op_; } // чтение символа операции
+        Expression* transform(Transformer* tr) const
+        {
+            return tr->transformBinaryOperation(this);
+        }
 
         double evaluate() const // реализация виртуального метода «вычислить»
         {
@@ -84,6 +108,11 @@ int main()
             return arg_;
         }
 
+        Expression* transform(Transformer* tr) const
+        {
+            return tr->transformFunctionCall(this);
+        }
+
         virtual double evaluate() const { // реализация виртуального метода «вычислить»
             if (name_ == "sqrt")
                 return sqrt(arg_->evaluate()); // либо вычисляем корень квадратный
@@ -102,6 +131,10 @@ int main()
     {
         Variable(string const& name) : name_(name) { } // в конструкторе указываем имя переменной
         string const& name() const { return name_; } // чтение имени переменной
+        Expression* transform(Transformer* tr) const
+        {
+            return tr->transformVariable(this);
+        }
 
         double evaluate() const // реализация виртуального метода «вычислить»
         {
@@ -112,17 +145,45 @@ int main()
         string const name_; // имя переменной
     };
 
-    Expression* e1 = new Number(1.234);
-    Expression* e2 = new Number(-1.234);
-    Expression* e3 = new BinaryOperation(e1, BinaryOperation::DIV, e2);
-    cout << e3->evaluate() << endl;
-    //------------------------------------------------------------------------------
-    Expression* n32 = new Number(32.0);
-    Expression* n16 = new Number(16.0);
-    Expression* minus = new BinaryOperation(n32, BinaryOperation::MINUS, n16);
-    Expression* callSqrt = new FunctionCall("sqrt", minus);
-    Expression* n2 = new Number(2.0);
-    Expression* mult = new BinaryOperation(n2, BinaryOperation::MUL, callSqrt);
-    Expression* callAbs = new FunctionCall("abs", mult);
+    struct CopySyntaxTree : Transformer
+    {
+        Expression* transformNumber(Number const* number)
+        {
+            Expression* exp = new Number(number->value());
+            return exp;
+        }
+        Expression* transformBinaryOperation(BinaryOperation const* binop)
+        {
+            Expression* exp = new BinaryOperation((binop->left())->transform(this), // Рекурсивно копируем левый операнд
+                binop->operation(),
+                (binop->right())->transform(this)); // Рекурсивно копируем правый операнд
+            return exp;
+        }
+        Expression* transformFunctionCall(FunctionCall const* fcall)
+        {
+            Expression* exp = new FunctionCall(fcall->name(),
+                (fcall->arg())->transform(this)); // Рекурсивно копируем аргумент функции
+            return exp;
+        }
+        Expression* transformVariable(Variable const* var)
+        {
+            Expression* exp = new Variable(var->name());
+            return exp;
+        }
+        ~CopySyntaxTree() { };
+    };
+
+    Number* n32 = new Number(32.0);
+    Number* n16 = new Number(16.0);
+    BinaryOperation* minus = new BinaryOperation(n32, BinaryOperation::MINUS, n16);
+    FunctionCall* callSqrt = new FunctionCall("sqrt", minus);
+    //Variable* var = new Variable("var");
+    Number* n8 = new Number(8.0);
+    BinaryOperation* mult = new BinaryOperation(n8, BinaryOperation::MUL, callSqrt);
+    FunctionCall* callAbs = new FunctionCall("abs", mult);
     cout << callAbs->evaluate() << endl;
+    CopySyntaxTree CST;
+    Expression* newExpr = callAbs->transform(&CST);
+    cout << newExpr->evaluate();
+
 }
